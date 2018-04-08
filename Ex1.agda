@@ -1,17 +1,4 @@
 {-# OPTIONS --allow-unsolved-metas #-}
-------------------------------------------------------------------------------
-------------------------------------------------------------------------------
--- CS410 2017/18 Exercise 1  VECTORS AND FRIENDS (worth 25%)
-------------------------------------------------------------------------------
-------------------------------------------------------------------------------
-
--- NOTE (19/9/17) This file is currently incomplete: more will arrive on
--- GitHub.
-
-
-------------------------------------------------------------------------------
--- Dependencies
-------------------------------------------------------------------------------
 
 open import CS410-Prelude
 
@@ -20,57 +7,45 @@ open import CS410-Prelude
 -- Vectors
 ------------------------------------------------------------------------------
 
-data Vec (X : Set) : Nat -> Set where  -- like lists, but length-indexed
+data Vec (X : Set) : Nat -> Set where
   []   :                              Vec X zero
   _,-_ : {n : Nat} -> X -> Vec X n -> Vec X (suc n)
-infixr 4 _,-_   -- the "cons" operator associates to the right
 
--- I like to use the asymmetric ,- to remind myself that the element is to
--- the left and the rest of the list is to the right.
-
--- Vectors are useful when there are important length-related safety
--- properties.
+infixr 4 _,-_
 
 
 ------------------------------------------------------------------------------
 -- Heads and Tails
 ------------------------------------------------------------------------------
 
--- We can rule out nasty head and tail errors by insisting on nonemptiness!
-
---??--1.1---------------------------------------------------------------------
-
 vHead : {X : Set}{n : Nat} -> Vec X (suc n) -> X
-vHead xs = {!!}
+vHead (x ,- xs) = x
 
 vTail : {X : Set}{n : Nat} -> Vec X (suc n) -> Vec X n
-vTail xs = {!!}
+vTail (x ,- xs) = xs
 
-vHeadTailFact :  {X : Set}{n : Nat}(xs : Vec X (suc n)) ->
-                 (vHead xs ,- vTail xs) == xs
-vHeadTailFact xs = {!!}                 
-
---??--------------------------------------------------------------------------
+vHeadTailFact : {X : Set}{n : Nat}(xs : Vec X (suc n)) -> (vHead xs ,- vTail xs) == xs
+vHeadTailFact (x ,- xs) = refl (x ,- xs)
 
 
 ------------------------------------------------------------------------------
 -- Concatenation and its Inverse
 ------------------------------------------------------------------------------
 
---??--1.2---------------------------------------------------------------------
-
 _+V_ : {X : Set}{m n : Nat} -> Vec X m -> Vec X n -> Vec X (m +N n)
-xs +V ys = {!!}
+[] +V ys        = ys
+(x ,- xs) +V ys = x ,- xs +V ys
+
 infixr 4 _+V_
 
 vChop : {X : Set}(m : Nat){n : Nat} -> Vec X (m +N n) -> Vec X m * Vec X n
-vChop m xs = {!!}
+vChop zero xs = [] , xs
+vChop (suc m) (x ,- xs) with vChop m xs
+vChop (suc m) (x ,- xs) | xf , xb = (x ,- xf) , xb
 
-vChopAppendFact : {X : Set}{m n : Nat}(xs : Vec X m)(ys : Vec X n) ->
-                  vChop m (xs +V ys) == (xs , ys)
-vChopAppendFact xs ys = {!!}
-
---??--------------------------------------------------------------------------
+vChopAppendFact : {X : Set}{m n : Nat}(xs : Vec X m)(ys : Vec X n) -> vChop m (xs +V ys) == (xs , ys)
+vChopAppendFact [] ys = refl ([] , ys)
+vChopAppendFact (x ,- xs) ys rewrite vChopAppendFact xs ys = refl ((x ,- xs) , ys)
 
 
 ------------------------------------------------------------------------------
@@ -88,22 +63,23 @@ vChopAppendFact xs ys = {!!}
 -- Show that two vMaps in a row can be collapsed to just one, or
 -- "composition of maps is map of compositions"
 
---??--1.3---------------------------------------------------------------------
-
 vMap : {X Y : Set} -> (X -> Y) -> {n : Nat} -> Vec X n -> Vec Y n
-vMap f xs = {!!}
+vMap f []        = []
+vMap f (x ,- xs) = f x ,- vMap f xs
 
 vMapIdFact : {X : Set}{f : X -> X}(feq : (x : X) -> f x == x) ->
-             {n : Nat}(xs : Vec X n) -> vMap f xs == xs
-vMapIdFact feq xs = {!!}
-
-vMapCpFact : {X Y Z : Set}{f : Y -> Z}{g : X -> Y}{h : X -> Z}
-               (heq : (x : X) -> f (g x) == h x) ->
              {n : Nat}(xs : Vec X n) ->
-               vMap f (vMap g xs) == vMap h xs
-vMapCpFact heq xs = {!!}
+             vMap f xs == xs
+vMapIdFact feq [] = refl []
+vMapIdFact feq (x ,- xs) rewrite vMapIdFact feq xs | feq x
+  = refl (x ,- xs)
 
---??--------------------------------------------------------------------------
+vMapCpFact : {X Y Z : Set}{f : Y -> Z}{g : X -> Y}{h : X -> Z}(heq : (x : X) -> f (g x) == h x) ->
+             {n : Nat}(xs : Vec X n) ->
+             vMap f (vMap g xs) == vMap h xs
+vMapCpFact heq [] = refl []
+vMapCpFact {f = f}{g = g}{h = h} heq (x ,- xs) rewrite vMapCpFact {f = f}{g = g}{h = h} heq xs | heq x
+  = refl (h x ,- vMap h xs)
 
 
 ------------------------------------------------------------------------------
@@ -114,45 +90,37 @@ vMapCpFact heq xs = {!!}
 -- and you want to concatenate and map, it doesn't matter which you do
 -- first.
 
---??--1.4---------------------------------------------------------------------
-
 vMap+VFact : {X Y : Set}(f : X -> Y) ->
              {m n : Nat}(xs : Vec X m)(xs' : Vec X n) ->
              vMap f (xs +V xs') == (vMap f xs +V vMap f xs')
-vMap+VFact f xs xs' = {!!}
-
---??--------------------------------------------------------------------------
-
--- Think about what you could prove, relating vMap with vHead, vTail, vChop...
--- Now google "Philip Wadler" "Theorems for Free"
+vMap+VFact f [] xs' = refl (vMap f xs')
+vMap+VFact f (x ,- xs) xs' rewrite vMap+VFact f xs xs' = refl (f x ,- vMap f xs +V vMap f xs')
 
 
 ------------------------------------------------------------------------------
 -- Applicative Structure (giving mapping and zipping cheaply)
 ------------------------------------------------------------------------------
 
---??--1.5---------------------------------------------------------------------
-
 -- HINT: you will need to override the default invisibility of n to do this.
 vPure : {X : Set} -> X -> {n : Nat} -> Vec X n
-vPure x {n} = {!!}
+vPure x {zero}  = []
+vPure x {suc n} =  x ,- vPure x
 
 _$V_ : {X Y : Set}{n : Nat} -> Vec (X -> Y) n -> Vec X n -> Vec Y n
-fs $V xs = {!!}
-infixl 3 _$V_  -- "Application associates to the left,
-               --  rather as we all did in the sixties." (Roger Hindley)
+[] $V []           = []
+f ,- fs $V x ,- xs =  f x ,- (fs $V xs)
+
+infixl 3 _$V_
 
 -- Pattern matching and recursion are forbidden for the next two tasks.
 
 -- implement vMap again, but as a one-liner
 vec : {X Y : Set} -> (X -> Y) -> {n : Nat} -> Vec X n -> Vec Y n
-vec f xs = {!!}
+vec f xs = vPure f $V xs
 
 -- implement the operation which pairs up corresponding elements
 vZip : {X Y : Set}{n : Nat} -> Vec X n -> Vec Y n -> Vec (X * Y) n
-vZip xs ys = {!!}
-
---??--------------------------------------------------------------------------
+vZip xs ys = vPure _,_ $V xs $V ys
 
 
 ------------------------------------------------------------------------------
@@ -164,26 +132,25 @@ vZip xs ys = {!!}
 -- some laws should hold for applicative functors.
 -- Check that this is the case.
 
---??--1.6---------------------------------------------------------------------
-
 vIdentity : {X : Set}{f : X -> X}(feq : (x : X) -> f x == x) ->
             {n : Nat}(xs : Vec X n) -> (vPure f $V xs) == xs
-vIdentity feq xs = {!!}
+vIdentity feq [] = refl []
+vIdentity feq (x ,- xs) rewrite vIdentity feq xs | feq x = refl (x ,- xs)
 
-vHomomorphism : {X Y : Set}(f : X -> Y)(x : X) ->
-                {n : Nat} -> (vPure f $V vPure x) == vPure (f x) {n}
-vHomomorphism f x {n} = {!!}
+vHomomorphism : {X Y : Set}(f : X -> Y)(x : X) -> {n : Nat} ->
+                   (vPure f $V vPure x) == vPure (f x) {n}
+vHomomorphism f x {zero} = refl []
+vHomomorphism f x {suc n} rewrite vHomomorphism f x {n} = refl (f x ,- vPure (f x))
 
 vInterchange : {X Y : Set}{n : Nat}(fs : Vec (X -> Y) n)(x : X) ->
-               (fs $V vPure x) == (vPure (_$ x) $V fs)
-vInterchange fs x = {!!}
+                 (fs $V vPure x) == (vPure (_$ x) $V fs)
+vInterchange [] x = refl []
+vInterchange (f ,- fs) x rewrite vInterchange fs x = refl (f x ,- (vPure (\ f → f x) $V fs))
 
-vComposition : {X Y Z : Set}{n : Nat}
-               (fs : Vec (Y -> Z) n)(gs : Vec (X -> Y) n)(xs : Vec X n) ->
-               (vPure _<<_ $V fs $V gs $V xs) == (fs $V (gs $V xs))
-vComposition fs gs xs = {!!}
-
---??--------------------------------------------------------------------------
+vComposition : {X Y Z : Set}{n : Nat}(fs : Vec (Y -> Z) n)(gs : Vec (X -> Y) n)(xs : Vec X n) ->
+                  (vPure _<<_ $V fs $V gs $V xs) == (fs $V (gs $V xs))
+vComposition [] [] [] = refl []
+vComposition (f ,- fs) (g ,- gs) (x ,- xs) rewrite vComposition fs gs xs = refl (f (g x) ,- (fs $V (gs $V xs)))
 
 
 ------------------------------------------------------------------------------
@@ -202,29 +169,54 @@ data _<=_ : Nat -> Nat -> Set where
 --   (a.k.a. "google the type" without "I feel lucky")
 -- The -s n option also helps.
 
---??--1.7---------------------------------------------------------------------
+all0<=4 : Vec (0 <= 4) 1
+all0<=4 = o' (o' (o' (o' oz))) ,- []
 
-all0<=4 : Vec (0 <= 4) {!!}
-all0<=4 = {!!}
+all1<=4 : Vec (1 <= 4) 4
+all1<=4 = o' (o' (o' (os oz))) ,-
+          o' (o' (os (o' oz))) ,-
+          o' (os (o' (o' oz))) ,-
+          os (o' (o' (o' oz))) ,-
+          []
 
-all1<=4 : Vec (1 <= 4) {!!}
-all1<=4 = {!!}
+all2<=4 : Vec (2 <= 4) 6
+all2<=4 =  os (os (o' (o' oz))) ,-
+           os (o' (os (o' oz))) ,-
+           os (o' (o' (os oz))) ,-
+           o' (os (os (o' oz))) ,-
+           o' (os (o' (os oz))) ,-
+           o' (o' (os (os oz))) ,-
+           []
 
-all2<=4 : Vec (2 <= 4) {!!}
-all2<=4 = {!!}
-       
-all3<=4 : Vec (3 <= 4) {!!}
-all3<=4 = {!!}
+all3<=4 : Vec (3 <= 4) 4
+all3<=4 = os (os (os (o' oz))) ,-
+          os (os (o' (os oz))) ,-
+          os (o' (os (os oz))) ,-
+          o' (os (os (os oz))) ,-
+          []
 
-all4<=4 : Vec (4 <= 4) {!!}
-all4<=4 = {!!}
+all4<=4 : Vec (4 <= 4) 1
+all4<=4 = os (os (os (os oz))) ,- []
 
 -- Prove the following. A massive case analysis "rant" is fine.
 
 no5<=4 : 5 <= 4 -> Zero
-no5<=4 th = {!!}
-
---??--------------------------------------------------------------------------
+no5<=4 (os (os (os (os ()))))
+no5<=4 (os (os (os (o' ()))))
+no5<=4 (os (os (o' (os ()))))
+no5<=4 (os (os (o' (o' ()))))
+no5<=4 (os (o' (os (os ()))))
+no5<=4 (os (o' (os (o' ()))))
+no5<=4 (os (o' (o' (os ()))))
+no5<=4 (os (o' (o' (o' ()))))
+no5<=4 (o' (os (os (os ()))))
+no5<=4 (o' (os (os (o' ()))))
+no5<=4 (o' (os (o' (os ()))))
+no5<=4 (o' (os (o' (o' ()))))
+no5<=4 (o' (o' (os (os ()))))
+no5<=4 (o' (o' (os (o' ()))))
+no5<=4 (o' (o' (o' (os ()))))
+no5<=4 (o' (o' (o' (o' ()))))
 
 
 ------------------------------------------------------------------------------
@@ -235,20 +227,19 @@ no5<=4 th = {!!}
 -- The os constructor tells you to take the next element of the vector;
 -- the o' constructor tells you to omit the next element of the vector.
 
---??--1.8---------------------------------------------------------------------
-
-_<?=_ : {X : Set}{n m : Nat} -> n <= m -> Vec X m
-                     -> Vec X n
-th <?= xs = {!!}
+_<?=_ : {X : Set}{n m : Nat} -> n <= m -> Vec X m -> Vec X n
+oz    <?= [] = []
+os th <?= (x ,- xs) =  x ,- th <?= xs
+o' th <?= (x ,- xs) =  th <?= xs
 
 -- it shouldn't matter whether you map then select or select then map
 
 vMap<?=Fact : {X Y : Set}(f : X -> Y)
               {n m : Nat}(th : n <= m)(xs : Vec X m) ->
               vMap f (th <?= xs) == (th <?= vMap f xs)
-vMap<?=Fact f th xs = {!!}
-
---??--------------------------------------------------------------------------
+vMap<?=Fact f oz []             = refl []
+vMap<?=Fact f (os th) (x ,- xs) rewrite vMap<?=Fact f th xs = refl (f x ,- (th <?= vMap f xs))
+vMap<?=Fact f (o' th) (x ,- xs) rewrite vMap<?=Fact f th xs = refl (th <?= vMap f xs)
 
 
 ------------------------------------------------------------------------------
@@ -257,25 +248,20 @@ vMap<?=Fact f th xs = {!!}
 
 -- Construct the identity thinning and the empty thinning.
 
---??--1.9---------------------------------------------------------------------
-
 oi : {n : Nat} -> n <= n
-oi {n}  = {!!}
+oi {zero}  = oz
+oi {suc n} = os oi
 
 oe : {n : Nat} -> 0 <= n
-oe {n}  = {!!}
-
---??--------------------------------------------------------------------------
-
+oe {zero}  = oz
+oe {suc n} = o' oe
 
 -- Show that all empty thinnings are equal to yours.
 
---??--1.10--------------------------------------------------------------------
-
 oeUnique : {n : Nat}(th : 0 <= n) -> th == oe
-oeUnique i = {!!}
-
---??--------------------------------------------------------------------------
+oeUnique oz     = refl oz
+oeUnique (o' i) with oeUnique i
+oeUnique (o' .oe) | refl .oe = refl (o' oe)
 
 
 -- Show that there are no thinnings of form big <= small  (TRICKY)
@@ -284,15 +270,20 @@ oeUnique i = {!!}
 -- HINT: you WILL need to expose the invisible numbers.
 -- HINT: check CS410-Prelude for a reminder of >=
 
---??--1.11--------------------------------------------------------------------
-
 oTooBig : {n m : Nat} -> n >= m -> suc n <= m -> Zero
-oTooBig {n} {m} n>=m th = {!!}
+oTooBig {_} {zero} n>=m ()
+oTooBig {zero} {suc m} n>=m (th) = n>=m
+oTooBig {suc n} {suc m} n>=m (os th) with oTooBig {n} {m} n>=m th
+oTooBig {suc n} {suc m} n>=m (os th) | ()
+oTooBig {suc n} {suc m} n>=m (o' th) with oTooBig {suc n} {m} (trans->= (suc n) n m (suc->= n) n>=m) th
+oTooBig {suc n} {suc m} n>=m (o' th) | ()
 
 oiUnique : {n : Nat}(th : n <= n) -> th == oi
-oiUnique th = {!!}
-
---??--------------------------------------------------------------------------
+oiUnique oz = refl oz
+oiUnique (os th) with oiUnique th
+oiUnique (os .oi) | refl .oi = refl (os oi)
+oiUnique {n}(o' th) with oTooBig (refl->= n) th
+oiUnique {.(suc _)} (o' th) | ()
 
 
 -- Show that the identity thinning selects the whole vector
