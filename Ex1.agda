@@ -237,7 +237,7 @@ o' th <?= (x ,- xs) =  th <?= xs
 vMap<?=Fact : {X Y : Set}(f : X -> Y)
               {n m : Nat}(th : n <= m)(xs : Vec X m) ->
               vMap f (th <?= xs) == (th <?= vMap f xs)
-vMap<?=Fact f oz []             = refl []
+vMap<?=Fact f oz [] = refl []
 vMap<?=Fact f (os th) (x ,- xs) rewrite vMap<?=Fact f th xs = refl (f x ,- (th <?= vMap f xs))
 vMap<?=Fact f (o' th) (x ,- xs) rewrite vMap<?=Fact f th xs = refl (th <?= vMap f xs)
 
@@ -332,19 +332,28 @@ cp-<?= (o' th) (o' th') (x ,- xs) rewrite cp-<?= (o' th) th' xs = refl (o' th <?
 -- Thinning Dominoes
 ------------------------------------------------------------------------------
 
---??--1.14--------------------------------------------------------------------
-
 idThen-o>> : {n m : Nat}(th : n <= m) -> (oi o>> th) == th
-idThen-o>> th = {!!}
+idThen-o>> oz = refl oz
+idThen-o>> (os th) rewrite idThen-o>> th = refl (os th)
+idThen-o>> {zero}(o' th) rewrite idThen-o>> th = refl (o' th)
+idThen-o>> {suc n}(o' th) rewrite idThen-o>> th = refl (o' th)
 
 idAfter-o>> : {n m : Nat}(th : n <= m) -> (th o>> oi) == th
-idAfter-o>> th = {!!}
+idAfter-o>> oz = refl oz
+idAfter-o>> (os th) rewrite idAfter-o>> th = refl (os th)
+idAfter-o>> (o' th) rewrite idAfter-o>> th = refl (o' th)
 
 assoc-o>> : {q p n m : Nat}(th0 : q <= p)(th1 : p <= n)(th2 : n <= m) ->
             ((th0 o>> th1) o>> th2) == (th0 o>> (th1 o>> th2))
-assoc-o>> th0 th1 th2 = {!!}
-
---??--------------------------------------------------------------------------
+assoc-o>> oz th1 th2 = refl (th1 o>> th2)
+assoc-o>> (os th0) (os th1) (os th2) rewrite assoc-o>> th0 th1 th2           = refl (os (th0 o>> (th1 o>> th2)))
+assoc-o>> (os th0) (os th1) (o' th2) rewrite assoc-o>> (os th0) (os th1) th2 = refl (o' (os th0 o>> (os th1 o>> th2)))
+assoc-o>> (os th0) (o' th1) (os th2) rewrite assoc-o>> (os th0) th1 th2      = refl (o' (os th0 o>> (th1 o>> th2)))
+assoc-o>> (os th0) (o' th1) (o' th2) rewrite assoc-o>> (os th0) (o' th1) th2 = refl (o' (os th0 o>> (o' th1 o>> th2)))
+assoc-o>> (o' th0) (os th1) (os th2) rewrite assoc-o>> th0 th1 th2           = refl (o' (th0 o>> (th1 o>> th2)))
+assoc-o>> (o' th0) (os th1) (o' th2) rewrite assoc-o>> (o' th0) (os th1) th2 = refl (o' (o' th0 o>> (os th1 o>> th2)))
+assoc-o>> (o' th0) (o' th1) (os th2) rewrite assoc-o>> (o' th0) th1 th2      = refl (o' (o' th0 o>> (th1 o>> th2)))
+assoc-o>> (o' th0) (o' th1) (o' th2) rewrite assoc-o>> (o' th0) (o' th1) th2 = refl (o' (o' th0 o>> (o' th1 o>> th2)))
 
 
 ------------------------------------------------------------------------------
