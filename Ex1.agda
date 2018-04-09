@@ -303,17 +303,29 @@ id-<?= (x ,- xs) rewrite id-<?= xs = refl (x ,- xs)
 -- To collect the bonus, you will need to think carefully about
 -- how to make the composition as *lazy* as possible.
 
---??--1.13--------------------------------------------------------------------
-
 _o>>_ : {p n m : Nat} -> p <= n -> n <= m -> p <= m
-th o>> th' = {!!}
+oz o>> th' = th'
+os th o>> os th' with th o>> th'
+os th o>> os th' | p = os p
+os th o>> o' th' with (os th) o>> th'
+os th o>> o' th' | p = o' p
+o' th o>> os th' with th o>> th'
+o' th o>> os th' | p = o' p
+o' th o>> o' th' with (o' th) o>> th'
+o' th o>> o' th' | p = o' p
 
 cp-<?= : {p n m : Nat}(th : p <= n)(th' : n <= m) ->
          {X : Set}(xs : Vec X m) ->
          ((th o>> th') <?= xs) == (th <?= (th' <?= xs))
-cp-<?= th th' xs = {!!}
+cp-<?= oz oz [] = refl []
+cp-<?= oz (o' th') xs with o' th' <?= xs
+cp-<?= oz (o' th') xs | [] = refl []
+cp-<?= (os th) (os th') (x ,- xs) rewrite cp-<?= th th' xs      = refl (x ,- (th <?= (th' <?= xs)))
+cp-<?= (os th) (o' th') (x ,- xs) rewrite cp-<?= (os th) th' xs = refl (os th <?= (th' <?= xs))
+cp-<?= (o' th) (os th') (x ,- xs) rewrite cp-<?= th th' xs      = refl (th <?= (th' <?= xs))
+cp-<?= (o' th) (o' th') (x ,- xs) rewrite cp-<?= (o' th) th' xs = refl (o' th <?= (th' <?= xs))
 
---??--------------------------------------------------------------------------
+-- TODO: shorter solution for bonus
 
 
 ------------------------------------------------------------------------------
