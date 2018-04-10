@@ -370,20 +370,18 @@ vProject xs i = vHead (i <?= xs)
 -- Your (TRICKY) mission is to reverse the process, tabulating a function
 -- from indices as a vector. Then show that these operations are inverses.
 
---??--1.15--------------------------------------------------------------------
-
 -- HINT: composition of functions
 vTabulate : {n : Nat}{X : Set} -> (1 <= n -> X) -> Vec X n
-vTabulate {n} f = {!!}
+vTabulate {zero}  f = []
+vTabulate {suc n} f with f (os oe) | vTabulate (f << o')
+vTabulate {suc n} f | x | xs =  x ,- xs
 
 -- This should be easy if vTabulate is correct.
-vTabulateProjections : {n : Nat}{X : Set}(xs : Vec X n) ->
-                       vTabulate (vProject xs) == xs
-vTabulateProjections xs = {!!}
+vTabulateProjections : {n : Nat}{X : Set}(xs : Vec X n) -> vTabulate (vProject xs) == xs
+vTabulateProjections [] = refl []
+vTabulateProjections (x ,- xs) rewrite vTabulateProjections xs = refl (x ,- xs)
 
 -- HINT: oeUnique
-vProjectFromTable : {n : Nat}{X : Set}(f : 1 <= n -> X)(i : 1 <= n) ->
-                    vProject (vTabulate f) i == f i
-vProjectFromTable f i = {!!}
-
---??--------------------------------------------------------------------------
+vProjectFromTable : {n : Nat}{X : Set}(f : 1 <= n -> X)(i : 1 <= n) -> vProject (vTabulate f) i == f i
+vProjectFromTable f (os i) rewrite oeUnique i = refl (f (os oe))
+vProjectFromTable f (o' i) rewrite vProjectFromTable (f << o') i = refl (f (o' i))
