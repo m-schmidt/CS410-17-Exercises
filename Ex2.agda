@@ -26,36 +26,30 @@ open import Ex1
 -- Categorical Jigsaws (based on Ex1)
 ------------------------------------------------------------------------------
 
--- In this section, most of the work has already happened. All you have to do
--- is assemble the collection of things you did into Ex1 into neat categorical
--- packaging.
-
---??--2.1---------------------------------------------------------------------
-
 OPE : Category            -- The category of order-preserving embeddings...
 OPE = record
   { Obj          = Nat    -- ...has numbers as objects...
   ; _~>_         = _<=_   -- ...and "thinnings" as arrows.
-                          -- Now, assemble the rest of the components.
-  ; id~>         = {!!}
-  ; _>~>_        = {!!}
-  ; law-id~>>~>  = {!!}
-  ; law->~>id~>  = {!!}
-  ; law->~>>~>   = {!!}
+  ; id~>         = oi
+  ; _>~>_        = _o>>_
+  ; law-id~>>~>  = idThen-o>>
+  ; law->~>id~>  = idAfter-o>>
+  ; law->~>>~>   = assoc-o>>
   }
 
 VEC : Nat -> SET => SET                -- Vectors of length n...
 VEC n = record
   { F-Obj       = \ X -> Vec X n       -- ...give a functor from SET to SET...
   ; F-map       = \ f xs -> vMap f xs  -- ...doing vMap to arrows.
-                                       -- Now prove the laws.
+
+  -- Now prove the laws.
   ; F-map-id~>  = extensionality \ xs -> {!!}
   ; F-map->~>   = \ f g -> extensionality \ xs -> {!!}
   }
 
 Op : Category -> Category             -- Every category has an opposite...
 Op C = record
-  { Obj          = Obj                -- ...with the same objects, but...  
+  { Obj          = Obj                -- ...with the same objects, but...
   ; _~>_         = \ S T -> T ~> S    -- ...arrows that go backwards!
                                       -- Now, find the rest!
   ; id~>         = {!!}
@@ -398,7 +392,7 @@ CUTTING {I}{O} C = record
      {!!} }
   ; F-map->~> = \ f g ->
      extensionality \ o -> extensionality \ { (c 8>< ps) ->
-     {!!} } 
+     {!!} }
   } where
   open _|>_ C
   open _=>_ (ALL I)
@@ -453,7 +447,7 @@ subbookkeeper = < (3 , 10 , refl _)
 module INTERIOR {I : Set}{C : I |> I} where  -- fix some C...
 
   open _|>_ C                                -- ...and open it
-  
+
   open module I->SET {I : Set} = Category (I ->SET)  -- work in I ->SET
 
   -- tile gives us an arrow from T into Interior C T
@@ -469,7 +463,7 @@ module INTERIOR {I : Set}{C : I |> I} where  -- fix some C...
   -- Now, other (CUTTING C) algebras give us operators on interiors.
 
   module INTERIORFOLD {P Q : I -> Set} where
-  
+
     interiorFold :
       [ P -:> Q ] ->              -- if we can turn a P into a Q...
       Algebra (CUTTING C) Q ->    -- ...and a bunch of Qs into a Q...
@@ -532,7 +526,7 @@ module INTERIOR {I : Set}{C : I |> I} where  -- fix some C...
       ((i : I)(c : Cuts i)(ps : All (Interior C P) (inners c)) ->
         qalg i (c 8>< all f (inners c) ps) == f i < c 8>< ps >) ->
       interiorFold pq qalg == f
-      
+
     interiorFoldLaw pq qalg f base step =
       extensionality \ i -> extensionality \ pi ->
       interiorFoldLemma pq qalg f base step i pi
@@ -764,4 +758,3 @@ picture = interiorFold (\ _ -> id) NatCut2DMatAlg
 -- sensible:
 
 test2 = picture _ rectangle
-
