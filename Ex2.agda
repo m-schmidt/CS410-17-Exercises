@@ -47,15 +47,17 @@ VEC n = record
   ; F-map->~>   = \ f g -> extensionality \ xs -> {!!}
   }
 
+
+
 Op : Category -> Category             -- Every category has an opposite...
 Op C = record
   { Obj          = Obj                -- ...with the same objects, but...
   ; _~>_         = \ S T -> T ~> S    -- ...arrows that go backwards!
                                       -- Now, find the rest!
-  ; id~>         = {!!}
-  ; _>~>_        = {!!}
-  ; law-id~>>~>  = {!!}
-  ; law->~>id~>  = {!!}
+  ; id~>         = id~>
+  ; _>~>_        = \ f g -> g >~> f
+  ; law-id~>>~>  = law->~>id~>
+  ; law->~>id~>  = law-id~>>~>
   ; law->~>>~>   = {!!}
   } where open Category C
 
